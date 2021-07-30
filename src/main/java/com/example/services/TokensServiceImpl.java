@@ -24,7 +24,7 @@ public class TokensServiceImpl implements TokensService {
     private static final String OK = "OK";
     Logger logger = LoggerFactory.getLogger(TokensServiceImpl.class);
 
-    @Value("token-secret")
+    @Value("${token-secret}")
     private String secret;
     @Autowired
     private TokensRepository tokensRepository;
@@ -79,6 +79,7 @@ public class TokensServiceImpl implements TokensService {
     }
 
     private String getSignedResponse(String subject) {
+        logger.info("Signing response with subject: '{}'", subject);
         Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder().setSubject(subject).setIssuedAt(new Date()).signWith(key).compact();
     }
