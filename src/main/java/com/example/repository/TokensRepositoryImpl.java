@@ -1,23 +1,24 @@
-package com.example.token;
+package com.example.repository;
 
+import com.example.models.LicenseToken;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
-public class TokensServiceImpl implements TokensService {
+public class TokensRepositoryImpl implements TokensRepository {
     private static final Map<String, LicenseToken> tokens = new HashMap<>();
 
     @Override
-    public TokensResponse redeemToken(LicenseToken licenseToken) {
+    public void saveToken(LicenseToken licenseToken) {
         tokens.put(licenseToken.getToken(), licenseToken);
-        return new TokensResponse("OK", 200);
     }
 
     @Override
-    public TokensResponse validateToken(LicenseToken licenseToken) {
-        return null;
+    public Optional<LicenseToken> getToken(String token) {
+        return Optional.ofNullable(tokens.get(token));
     }
 
     @Override
