@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ public class TokensServiceImpl implements TokensService {
     @Override
     public TokensResponse redeemToken(String jws) {
         Optional<Claims> jwtBody = getBody(jws);
-        if(!jwtBody.isPresent()) {
+        if (!jwtBody.isPresent()) {
             return new TokensResponse(getSignedResponse("Untrusted token"));
         }
         Claims claims = jwtBody.get();
@@ -40,18 +41,22 @@ public class TokensServiceImpl implements TokensService {
         String appId = claims.get(APP_ID, String.class);
 
         Optional<LicenseToken> prevToken = tokensRepository.getToken(token);
-        if(prevToken.isPresent()) {
-            logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getAppID(), appId);
+        if (prevToken.isPresent()) {
+            if (prevToken.get().getAppID().equals(appId)) {
+                logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getAppID(), appId);
+                return new TokensResponse(getSignedResponse(OK));
+            } else {
+                return new TokensResponse(getSignedResponse("Token doesn't match application '" + appId + "'"));
+            }
+        } else {
+            return new TokensResponse(getSignedResponse("Token is not valid"));
         }
-        tokensRepository.saveToken(new LicenseToken(token, appId));
-
-        return new TokensResponse(getSignedResponse(OK));
     }
 
     @Override
     public TokensResponse validateToken(String jws) {
         Optional<Claims> jwtBody = getBody(jws);
-        if(!jwtBody.isPresent()) {
+        if (!jwtBody.isPresent()) {
             return new TokensResponse(getSignedResponse("Untrusted token"));
         }
         Claims claims = jwtBody.get();
@@ -59,18 +64,18 @@ public class TokensServiceImpl implements TokensService {
         String appId = claims.get(APP_ID, String.class);
 
         Optional<LicenseToken> prevToken = tokensRepository.getToken(token);
-        if(prevToken.isPresent() && prevToken.get().getAppID().equals(appId)) {
+        if (prevToken.isPresent() && prevToken.get().getAppID().equals(appId)) {
             logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getAppID(), appId);
             return new TokensResponse(getSignedResponse(OK));
         }
 
-        return new TokensResponse(getSignedResponse("Other app uses the token"));
+        return new TokensResponse(getSignedResponse("Another application uses the token"));
     }
 
     @Override
     public void resetToken(String jws) {
         Optional<Claims> jwtBody = getBody(jws);
-        if(jwtBody.isPresent()) {
+        if (jwtBody.isPresent()) {
             Claims claims = jwtBody.get();
             String token = claims.getSubject();
             Optional<LicenseToken> licenseToken = tokensRepository.getToken(token);
@@ -86,7 +91,9 @@ public class TokensServiceImpl implements TokensService {
 
     private Optional<Claims> getBody(String jws) {
         try {
-            return Optional.of(Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(jws).getBody());
+            String encodedKey = Base64.getEncoder().encodeToString(secret.getBytes());
+            Claims body = Jwts.parserBuilder().setSigningKey(encodedKey).build().parseClaimsJws(jws).getBody();
+            return Optional.of(body);
         } catch (JwtException e) {
             logger.warn("Untrusted JWT token '{}'", e.getMessage());
         }
