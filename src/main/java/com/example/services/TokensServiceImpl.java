@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Service
 public class TokensServiceImpl implements TokensService {
-    private static final String APP_ID = "appId";
+    private static final String SESSION_ID = "sessionId";
     private static final String OK = "OK";
     Logger logger = LoggerFactory.getLogger(TokensServiceImpl.class);
 
@@ -38,15 +38,17 @@ public class TokensServiceImpl implements TokensService {
         }
         Claims claims = jwtBody.get();
         String token = claims.getSubject();
-        String appId = claims.get(APP_ID, String.class);
+        String sessionId = claims.get(SESSION_ID, String.class);
 
         Optional<LicenseToken> prevToken = tokensRepository.getToken(token);
         if (prevToken.isPresent()) {
-            if (prevToken.get().getAppID().equals(appId)) {
-                logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getAppID(), appId);
+            if (!prevToken.get().getSessionId().equals(sessionId)) {
+                logger.info("Overriding access token from session '{}' to session '{}'", prevToken.get().getSessionId(), sessionId);
+                tokensRepository.saveToken(new LicenseToken(token, sessionId));
                 return new TokensResponse(getSignedResponse(OK));
             } else {
-                return new TokensResponse(getSignedResponse("Token doesn't match application '" + appId + "'"));
+                logger.info("Re-login '{}'", prevToken.get().getSessionId());
+                return new TokensResponse(getSignedResponse(OK));
             }
         } else {
             return new TokensResponse(getSignedResponse("Token is not valid"));
@@ -61,11 +63,11 @@ public class TokensServiceImpl implements TokensService {
         }
         Claims claims = jwtBody.get();
         String token = claims.getSubject();
-        String appId = claims.get(APP_ID, String.class);
+        String sessionId = claims.get(SESSION_ID, String.class);
 
         Optional<LicenseToken> prevToken = tokensRepository.getToken(token);
-        if (prevToken.isPresent() && prevToken.get().getAppID().equals(appId)) {
-            logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getAppID(), appId);
+        if (prevToken.isPresent() && prevToken.get().getSessionId().equals(sessionId)) {
+            logger.info("Overriding access token from app '{}' to app '{}'", prevToken.get().getSessionId(), sessionId);
             return new TokensResponse(getSignedResponse(OK));
         }
 

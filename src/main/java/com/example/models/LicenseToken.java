@@ -2,11 +2,11 @@ package com.example.models;
 
 public class LicenseToken {
     private String token;
-    private String appID;
+    private String sessionId;
 
-    public LicenseToken(String token, String appID) {
+    public LicenseToken(String token, String sessionId) {
         this.token = token;
-        this.appID = appID;
+        this.sessionId = sessionId;
     }
 
     public LicenseToken() {
@@ -20,11 +20,11 @@ public class LicenseToken {
         this.token = token;
     }
 
-    public String getAppID() {
-        return appID;
+    public String getSessionId() {
+        return sessionId;
     }
 
-    public void setAppID(String appID) {
-        this.appID = appID;
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

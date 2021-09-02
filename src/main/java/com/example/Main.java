@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @SpringBootApplication
 public class Main {
 
-  private static final String FRUIT_NINJA = "fruit-ninja";
-
   @Autowired
   private TokensRepository repository;
 
@@ -46,8 +44,8 @@ public class Main {
 
   @EventListener(ApplicationReadyEvent.class)
   public void onApplicationStarted() {
-    repository.saveToken(new LicenseToken("very-secret-1", FRUIT_NINJA));
-    repository.saveToken(new LicenseToken("asdf", FRUIT_NINJA));
-    repository.saveToken(new LicenseToken("blah", "non-existing-app-test"));
+    repository.saveToken(new LicenseToken("very-secret-1", ""));
+    repository.saveToken(new LicenseToken("asdf", "FRUIT_NINJA"));
+    repository.saveToken(new LicenseToken("very-secret-2", ""));
   }
 }
